@@ -21,13 +21,16 @@ except:
 data = []
 
 for x in machine_json:
-    data.append([x['hostname'], str(x['power_state'])+"\n"+str(x['power_type']),
-                 x['status_name'], str(x['owner'])+"\n"+str(x['pool']['name']),
-                 x['zone']['name'],
-                 str(x['boot_interface']['vlan']['fabric'])+"\n"+
-                 str(x['boot_interface']['vlan']['name']),
-                 str(x['boot_interface']['links'][0]['subnet']['name'])+"\n"+
-                 str(x['interface_set'][0]['mac_address'])])
+    try:
+        data.append([x['hostname'], str(x['power_state'])+"\n"+str(x['power_type']),
+                     x['status_name'], str(x['owner'])+"\n"+str(x['pool']['name']),
+                     x['zone']['name'],
+                     str(x['boot_interface']['vlan']['fabric'])+"\n"+
+                     str(x['boot_interface']['vlan']['name']),
+                     str(x['boot_interface']['links'][0]['subnet']['name'])+"\n"+
+                     str(x['interface_set'][0]['mac_address'])])
+    except:
+        continue
 
 print(tabulate(data, headers=["Hostname","Power\nType", "Status", "Owner\nPool",
                               "Zone\nSpaces", "Fabric\nVLAN", "Subnet\nMAC Address"],
