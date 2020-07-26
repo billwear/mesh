@@ -2,6 +2,30 @@
 import sys, subprocess, json
 from tabulate import tabulate
 
+print_ready = False
+print_allocated = False
+print_deploying = False
+print_deployed = False
+
+if(len(sys.argv) > 1):
+    for x in sys.argv:
+        if(x == "help"):
+            print("machine-list [ready allocated deploying deploying]")
+            sys.exit()
+        elif(x == "ready"):
+            print_ready = True
+        elif(x == "allocated"):
+            print_allocated = True
+        elif(x == "deploying"):
+            print_deploying = True
+        elif(x == "deployed"):
+            print_deployed = True
+else:
+    print_ready = True
+    print_allocated = True
+    print_deploying = True
+    print_deployed = True
+
 proc = subprocess.Popen([
     'maas',
     'admin',
@@ -19,6 +43,15 @@ except:
     sys.exit
 
 data = []
+ready_machines = []
+allocated_machines = []
+deploying_machines = []
+deployed_machines = []
+ready = 0
+allocated = 0
+deploying = 0
+deployed = 0
+machine_count = 0
 
 for x in machine_json:
     try:
@@ -32,8 +65,60 @@ for x in machine_json:
     except:
         continue
 
-print(tabulate(data, headers=["Hostname","Power\nType", "Status", "Owner\nPool",
-                              "Zone\nSpaces", "Fabric\nVLAN", "Subnet\nMAC Address"],
-               tablefmt="grid"))
+for x in data:
+    if(x[2] == "Ready"):
+        ready_machines.append(x)
+        ready += 1
+        machine_count += 1
+    if(x[2] == "Allocated"):
+        allocated_machines.append(x)
+        allocated += 1
+        machine_count += 1
+    if(x[2] == "Deploying"):
+        deploying_machines.append(x)
+        deploying += 1
+        machine_count += 1
+    if(x[2] == "Deployed"):
+        deployed_machines.append(x)
+        deployed += 1
+        machine_count += 1
+
+output_string = ""
+
+if(ready > 0 and print_ready == True):
+    output_string += "\n\nReady ("+str(ready)+" machines out of "+str(machine_count)+"):\n"
+    output_string += tabulate(ready_machines,
+                              headers=["Hostname","Power\nType", "Status",
+                                       "Owner\nPool", "Zone\nSpaces",
+                                       "Fabric\nVLAN","Subnet\nMAC Address"],
+                              tablefmt="grid")
+
+if(allocated > 0 and print_allocated == True):
+    output_string += "\n\nAllocated ("+str(allocated)+" machines out of "+str(machine_count)+"):\n"
+    output_string += tabulate(allocated_machines,
+                              headers=["Hostname","Power\nType", "Status",
+                                       "Owner\nPool", "Zone\nSpaces",
+                                       "Fabric\nVLAN","Subnet\nMAC Address"],
+                              tablefmt="grid")
+
+if(deploying > 0 and print_deploying == True):
+    output_string += "\n\nDeploying ("+str(deploying)+" machines out of "+str(machine_count)+"):\n"
+    output_string += tabulate(deploying_machines,
+                              headers=["Hostname","Power\nType", "Status",
+                                       "Owner\nPool", "Zone\nSpaces",
+                                       "Fabric\nVLAN","Subnet\nMAC Address"],
+                              tablefmt="grid")
+
+if(deployed > 0 and print_deployed == True):
+    output_string += "\n\nDeployed ("+str(deployed)+" machines out of "+str(machine_count)+"):\n"
+    output_string += tabulate(deployed_machines,
+                              headers=["Hostname","Power\nType", "Status",
+                                       "Owner\nPool", "Zone\nSpaces",
+                                       "Fabric\nVLAN","Subnet\nMAC Address"],
+                              tablefmt="grid")
+
+
+print(output_string)
+
                        
                        
