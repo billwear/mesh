@@ -9,6 +9,10 @@ Here's an example of the full machine list:
 
 ![machine list](text-machine-list.jpg)
 
+And an example of machine details:
+
+![machine details](machine-details.jpg)
+
 Here's how you use **machine-list**:
 
 ```

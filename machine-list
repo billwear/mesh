@@ -43,7 +43,8 @@ def print_machine_details(profile, matchstring):
     )
     
     output = proc.stdout.read()
-
+    output_list = []
+    
     try:
         machine_json = json.loads(output)
     except:
@@ -60,10 +61,8 @@ def print_machine_details(profile, matchstring):
         print(error_message)
         sys.exit()
 
-    hostname = machine_json[0]['hostname']
-    output_string = "\tDetails for hostname: " + hostname
-    output_string += "     System ID: " + machine_json[0]['system_id'] + "\n"
-    output_line = []
+    hostname = "Hostname\n" + machine_json[0]['hostname']
+    systemid = "System ID\n" + machine_json[0]['system_id']
     status = "Machine Status\n"+machine_json[0]['status_message']
     cpu_info = "CPU "+machine_json[0]['architecture']+"\n"
     cpu_info += str(machine_json[0]['cpu_count'])+" core(s)\n"
@@ -74,9 +73,8 @@ def print_machine_details(profile, matchstring):
     stg_info = "Storage\n"
     stg_cap = round((machine_json[0]['storage'] / 1024),2)
     stg_info += str(stg_cap)+" GiB"
-    output_line.append([status, cpu_info, ram_info, stg_info])
-    output_string += tabulate(output_line,tablefmt="grid")
-    output_line = []
+    output_list.append([hostname, systemid, status, cpu_info, ram_info, stg_info])
+#    output_string += tabulate(output_list,tablefmt="grid")
     if(machine_json[0]['owner'] == None):
        owner = "Owner\n-"
     else:
@@ -88,13 +86,10 @@ def print_machine_details(profile, matchstring):
     tags = "Tags"
     for x in machine_json[0]['tag_names']:
         tags += "\n" + x
-    output_line.append([owner,domain,zone,pool,ptype,tags])
-    output_string += "\n"+tabulate(output_line,tablefmt="grid")
-    output_string += "\n\n\tNetwork: "
-    output_string += machine_json[0]['interface_set'][0]['vendor']
-    output_string += " (" + hostname
-    output_string += " / " + machine_json[0]['system_id'] +")"
-    output_line = []
+    output_list.append([owner,domain,zone,pool,ptype,tags])
+#    output_string += "\n"+tabulate(output_line,tablefmt="grid")
+    network = "Network\n"
+    network += machine_json[0]['interface_set'][0]['vendor']
     nwname = "Name\n" + machine_json[0]['interface_set'][0]['name']
     macaddr = "MAC address\n"
     macaddr += machine_json[0]['interface_set'][0]['mac_address']
@@ -110,24 +105,25 @@ def print_machine_details(profile, matchstring):
             dhcp += "External"
     else:
         dhcp += "Not enabled"
-    output_line = [[nwname, macaddr, lspeed, fabric, dhcp]]
-    output_string += "\n"+tabulate(output_line,tablefmt="grid")
-    output_string += "\n\n\tSystem Information "
+    output_list.append([network, nwname, macaddr, lspeed, fabric, dhcp])
+#    output_string += "\n"+tabulate(output_line,tablefmt="grid")
+    hw_heading = "Hardware\nInformation"
+    blank_heading = " "
+    sysinfo = "System\nInformation"
     vendor = "Vendor\n" + machine_json[0]['hardware_info']['system_vendor']
     product = "Product\n" + machine_json[0]['hardware_info']['system_product']
     version = "Version\n" + machine_json[0]['hardware_info']['system_version']
     serial = "Serial\n" + machine_json[0]['hardware_info']['system_serial']
-    output_line = [[vendor,product, version, serial]]
-    output_string += "\n"+tabulate(output_line,tablefmt="grid")
-    output_string += "\n\n\tMainboard Information "
+    output_list.append([hw_heading, sysinfo, vendor, product, version, serial])
+    mbheading = "Mainboard\nInformation "
     mbvendor = "Vendor\n" + machine_json[0]['hardware_info']['mainboard_vendor']
     mbproduct = "Product\n" + machine_json[0]['hardware_info']['mainboard_product']
     fwvsn = "F/W version\n"
     fwvsn += machine_json[0]['hardware_info']['mainboard_firmware_version']
     fwdate = "F/W date\n"
     fwdate += machine_json[0]['hardware_info']['mainboard_firmware_date']
-    output_line = [[mbvendor,mbproduct, fwvsn, fwdate]]
-    output_string += "\n"+tabulate(output_line,tablefmt="grid")
+    output_list.append([blank_heading, mbheading, mbvendor,mbproduct, fwvsn, fwdate])
+    output_string += "\n"+tabulate(output_list,tablefmt="grid")
         
     print(output_string)
 
