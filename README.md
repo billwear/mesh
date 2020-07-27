@@ -2,7 +2,8 @@
 
 Just a little set of scripts that reproduce text versions of UI screens (like the Machine List, for example) on your terminal:   
 
-* **machine-list** prints a text machine list, very much like the MAAS UI machine list.  You can select machine status values to filter the output table.  It *also* prints details on individual machines, selected by hostname or system ID. It requires pip-ing the **tabulate** module.
+### machine-list
+**machine-list** prints a text machine list, very much like the MAAS UI machine list.  You can select machine status values to filter the output table.  It *also* prints details on individual machines, selected by hostname or system ID. It requires pip-ing the **tabulate** module.
 
 Here's an example of the full machine list:
 
