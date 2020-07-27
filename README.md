@@ -8,7 +8,7 @@ Just a little set of scripts that reproduce text versions of UI screens (like th
 
 Here's how you use **machine-list**:
 
-'''
+```
 machine-list profile ([hostname "hostname"] | [ready allocated deploying deploying])
 
 machine-list will print:
@@ -25,7 +25,7 @@ machine-list will print:
 
 	information for a specific system ID:
 		"machine-list system_id 54-50-00-09-df-17
-'''
+```
 
 Also useful for CLI-centric documentation.
 
