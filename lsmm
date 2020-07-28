@@ -64,9 +64,7 @@ def print_summary(machine_json):
     print(output_string)
 
 
-@click.command(
-    help="MAAS machine operations helper script\n\nNote that it's possible to create filters which find no machines"
-)
+@click.command(help="lsmm - list MAAS machines")
 @click.option(
     "-p", "profile", default="admin", help='MAAS profile name, defaults to "admin"'
 )
