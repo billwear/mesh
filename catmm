@@ -1,0 +1,135 @@
+#!/usr/bin/python3
+import sys, subprocess, json
+from tabulate import tabulate
+import click
+
+
+def load_machines(profile, param):
+    args = []
+    args.append("maas")
+    args.append(profile)
+    args.append("machines")
+    args.append("read")
+    for x in param:
+        args.append(x)
+
+    proc = subprocess.Popen(args, stdout=subprocess.PIPE)
+
+    output = proc.stdout.read()
+
+    try:
+        machine_json = json.loads(output)
+        return machine_json
+    except:
+        print("couldn't load json correctly; exiting")
+        sys.exit()
+
+
+def print_details(machine_json):
+    data = []
+    # output_string += "\n" + tabulate(output_list, tablefmt="grid")
+
+    for x in machine_json:
+        #        try:
+        data.append(
+            [
+                "Hostname\n" + x["hostname"],
+                "System ID\n" + x["system_id"],
+                "Machine Status\n" + x["status_message"],
+                "CPU "
+                + x["architecture"]
+                + "\n"
+                + str(x["cpu_count"])
+                + " core(s)\n"
+                + x["hardware_info"]["cpu_model"],
+                "Memory\n" + str(round((x["memory"] / 1024), 2)) + " GiB",
+                "Storage\n" + str(round((x["storage"] / 1024), 2)) + " GiB",
+            ]
+        )
+        if x["owner"] == None:
+            owner = "Owner\n-"
+        else:
+            owner = "Owner\n" + x["owner"]
+        tags = ""
+        for y in x["tag_names"]:
+            tags += "\n" + y
+        data.append(
+            [
+                owner,
+                "Domain\n" + x["domain"]["name"],
+                "Zone\n" + x["zone"]["name"],
+                "Resource pool\n" + x["pool"]["name"],
+                "Power type\n" + x["power_type"],
+                tags,
+            ]
+        )
+        dhcp = "DHCP\n"
+        if x["interface_set"][0]["vlan"]["dhcp_on"] == True:
+            if x["interface_set"][0]["vlan"]["external_dhcp"] == None:
+                dhcp += "MAAS-provided"
+            else:
+                dhcp += "External"
+        else:
+            dhcp += "Not enabled"
+        data.append(
+            [
+                "Network\n" + x["interface_set"][0]["vendor"],
+                "Name\n" + x["interface_set"][0]["name"],
+                "MAC address\n" + x["interface_set"][0]["mac_address"],
+                "Link speed\n" + str(x["interface_set"][0]["link_speed"]) + " Mbps",
+                "Fabric\n" + x["boot_interface"]["vlan"]["fabric"],
+                dhcp,
+            ]
+        )
+        data.append(
+            [
+                "Hardware\nInformation",
+                "System\nInformation",
+                "Vendor\n" + x["hardware_info"]["system_vendor"],
+                "Product\n" + x["hardware_info"]["system_product"],
+                "Version\n" + x["hardware_info"]["system_version"],
+                "Serial\n" + x["hardware_info"]["system_serial"],
+            ]
+        )
+        data.append(
+            [
+                " ",
+                "Mainboard\nInformation ",
+                "Vendor\n" + x["hardware_info"]["mainboard_vendor"],
+                "Product\n" + x["hardware_info"]["mainboard_product"],
+                "F/W version\n" + x["hardware_info"]["mainboard_firmware_version"],
+                "F/W date\n" + x["hardware_info"]["mainboard_firmware_date"],
+            ]
+        )
+
+    output_string = tabulate(data, tablefmt="grid")
+    print(output_string)
+
+
+@click.command(help="catmm - print MAAS machine details")
+@click.option(
+    "-p", "profile", default="admin", help='MAAS profile name, defaults to "admin"'
+)
+@click.option("-s", "status", help='Machine status ("new","ready",...); omit for all')
+@click.option("-h", "hostname", help="Machine hostname; omit for all")
+@click.option("-i", "systemid", help="Machine system ID; omit for all")
+@click.option("-z", "zone", help="Machines in zone ZONE; omit for all")
+@click.option("-r", "rpool", help="Machines in resources pool RPOOL; omit for all")
+def cli(profile, status, hostname, systemid, zone, rpool):
+    param = []
+    if status != None:
+        param.append("status=" + status)
+    if hostname != None:
+        param.append("hostname=" + hostname)
+    if systemid != None:
+        param.append("id=" + systemid)
+    if zone != None:
+        param.append("zone=" + zone)
+    if rpool != None:
+        param.append("pool=" + rpool)
+    machine_json = load_machines(profile, param)
+    print_details(machine_json)
+
+
+if __name__ == "__main__":
+    cli()
