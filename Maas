@@ -1,14 +1,38 @@
 #!/usr/bin/python3
 import sys, subprocess, json, os
 from tabulate import tabulate
-import click
+from pathlib import Path
+import click, yaml, pickle, time
 
-import pickle
-
-pickle_filepath = "/home/stormrider/.system.swap"
+home = str(Path.home())
+pickle_filepath = home + "/.system.swap"
 
 username = ""
+ENOJSON = 1
+ENORECD = 2
 ENOAUTH = 4
+
+
+def get_machine_data(param):
+    args = []
+    args.append("maas")
+    args.append(username)
+    args.append("machines")
+    args.append("read")
+    if param != None:
+        args.append(param)
+
+    proc = subprocess.Popen(args, stdout=subprocess.PIPE)
+
+    output = proc.stdout.read()
+
+    try:
+        machine_json = json.loads(output)
+    except:
+        print("couldn't load json correctly; exiting")
+        sys.exit(ENOJSON)
+
+    return machine_json
 
 
 def print_summary(machine_json):
@@ -118,25 +142,19 @@ def list(machine_name=None, Format=None):
     Use "--format" to get machine info in a data-serialization language.
     """
     check_login()
-    args = []
-    args.append("maas")
-    args.append(username)
-    args.append("machines")
-    args.append("read")
-    if machine_name != None:
-        args.append("hostname=" + machine_name)
+    machine_json = get_machine_data("hostname=" + machine_name)
 
-    proc = subprocess.Popen(args, stdout=subprocess.PIPE)
-
-    output = proc.stdout.read()
-
-    try:
-        machine_json = json.loads(output)
-    except:
-        print("couldn't load json correctly; exiting")
-        sys.exit()
-
-    print_summary(machine_json)
+    if Format == "json":
+        print(machine_json)
+    elif Format == "yaml":
+        print(
+            yaml.dump(
+                yaml.load(json.dumps(machine_json), Loader=yaml.FullLoader),
+                default_flow_style=False,
+            )
+        )
+    else:
+        print_summary(machine_json)
 
 
 @Maas.command(name="commission")
@@ -145,7 +163,26 @@ def commission(machine_name):
     """
     Commission one machine.
     """
-    pass
+    check_login()
+    machine_json = get_machine_data("hostname=" + machine_name)
+
+    if machine_json == None:
+        print("Maas: no machine with hostname=" + hostname + ": exiting")
+        sys.exit(ENORECD)
+
+    system_id = machine_json[0]["system_id"]
+    args = []
+    args.append("maas")
+    args.append(username)
+    args.append("machine")
+    args.append("commission")
+    args.append(system_id)
+
+    proc = subprocess.Popen(args, stdout=subprocess.PIPE)
+
+    output = proc.stdout.read()
+
+    print(output)
 
 
 @Maas.command(name="commission-all")
@@ -153,7 +190,43 @@ def commission_all():
     """
     Commission all allocated machines.
     """
-    pass
+    check_login()
+    machine_json = get_machine_data("status=ready")
+
+    if machine_json == None:
+        print("Maas: no machines in ready state: exiting")
+        sys.exit(ENORECD)
+
+    for x in machine_json:
+        system_id = x["system_id"]
+        args = []
+        args.append("maas")
+        args.append(username)
+        args.append("machine")
+        args.append("commission")
+        args.append(system_id)
+        proc = subprocess.Popen(args, stdout=subprocess.PIPE)
+        output = proc.stdout.read()
+        print(output)
+
+    machine_json = get_machine_data("status=new")
+
+    if machine_json == None:
+        print("Maas: no machines in new state: exiting")
+        sys.exit(ENORECD)
+
+    for x in machine_json:
+        system_id = x["system_id"]
+        args = []
+        args.append("maas")
+        args.append(username)
+        args.append("machine")
+        args.append("commission")
+        args.append(system_id)
+
+        proc = subprocess.Popen(args, stdout=subprocess.PIPE)
+        output = proc.stdout.read()
+        print(output)
 
 
 @Maas.command()
@@ -162,7 +235,26 @@ def allocate(machine_name):
     """
     Acquire one machine.
     """
-    pass
+    check_login()
+    machine_json = get_machine_data("hostname=" + machine_name)
+
+    if machine_json == None:
+        print("Maas: no machine with hostname=" + hostname + ": exiting")
+        sys.exit(ENORECD)
+
+    system_id = "system_id=" + machine_json[0]["system_id"]
+    args = []
+    args.append("maas")
+    args.append(username)
+    args.append("machines")
+    args.append("allocate")
+    args.append(system_id)
+
+    proc = subprocess.Popen(args, stdout=subprocess.PIPE)
+
+    output = proc.stdout.read()
+
+    print(output)
 
 
 @Maas.command(name="allocate-all")
@@ -170,7 +262,24 @@ def allocate_all():
     """
     Acquire all machines in the Ready state.
     """
-    pass
+    check_login()
+    machine_json = get_machine_data("status=ready")
+
+    if machine_json == None:
+        print("Maas: no machines in ready state: exiting")
+        sys.exit(ENORECD)
+
+    for x in machine_json:
+        system_id = "system_id=" + x["system_id"]
+        args = []
+        args.append("maas")
+        args.append(username)
+        args.append("machines")
+        args.append("allocate")
+        args.append(system_id)
+        proc = subprocess.Popen(args, stdout=subprocess.PIPE)
+        output = proc.stdout.read()
+        print(output)
 
 
 @Maas.command()
@@ -179,7 +288,26 @@ def deploy(machine_name):
     """
     Deploy one machine.
     """
-    pass
+    check_login()
+    machine_json = get_machine_data("hostname=" + machine_name)
+
+    if machine_json == None:
+        print("Maas: no machine with hostname=" + hostname + ": exiting")
+        sys.exit(ENORECD)
+
+    system_id = machine_json[0]["system_id"]
+    args = []
+    args.append("maas")
+    args.append(username)
+    args.append("machine")
+    args.append("deploy")
+    args.append(system_id)
+
+    proc = subprocess.Popen(args, stdout=subprocess.PIPE)
+
+    output = proc.stdout.read()
+
+    print(output)
 
 
 @Maas.command(name="deploy-all")
@@ -187,7 +315,24 @@ def deply_all():
     """
     Deploy all allocated machines.
     """
-    pass
+    check_login()
+    machine_json = get_machine_data("status=allocated")
+
+    if machine_json == None:
+        print("Maas: no machines in ready state: exiting")
+        sys.exit(ENORECD)
+
+    for x in machine_json:
+        system_id = x["system_id"]
+        args = []
+        args.append("maas")
+        args.append(username)
+        args.append("machine")
+        args.append("deploy")
+        args.append(system_id)
+        proc = subprocess.Popen(args, stdout=subprocess.PIPE)
+        output = proc.stdout.read()
+        print(output)
 
 
 @Maas.command()
@@ -196,7 +341,26 @@ def release(machine_name):
     """
     Release one machine.
     """
-    pass
+    check_login()
+    machine_json = get_machine_data("hostname=" + machine_name)
+
+    if machine_json == None:
+        print("Maas: no machine with hostname=" + hostname + ": exiting")
+        sys.exit(ENORECD)
+
+    system_id = machine_json[0]["system_id"]
+    args = []
+    args.append("maas")
+    args.append(username)
+    args.append("machine")
+    args.append("release")
+    args.append(system_id)
+
+    proc = subprocess.Popen(args, stdout=subprocess.PIPE)
+
+    output = proc.stdout.read()
+
+    print(output)
 
 
 @Maas.command(name="set-config-timeout")
