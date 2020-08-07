@@ -1,4 +1,4 @@
-cash(1)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;General Commands Manual&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cash(1)
+cash(9)...............................................Special Purpose Commands..............................................cash(9)
 
 
 
