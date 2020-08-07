@@ -1,8 +1,4 @@
-cash(1)<center>General Commands Manual</center>
-
-
-
-
+cash (
 ## MAAS CLI Tools
 
 Various scripts that wrap the MAAS CLI for utility and prototyping purposes.
