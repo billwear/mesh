@@ -1,4 +1,4 @@
-cash(1)                              General Commands Manual                         cash(1)
+cash(1)&nbsp;&nbsp;&nbsp;General Commands Manual                         cash(1)
 
 
 
