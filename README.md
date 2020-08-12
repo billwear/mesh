@@ -1,3 +1,8 @@
+cash(9) &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; Special Purpose Commands &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; cash(9)
+
+
+
+
 ## MAAS CLI Tools
 
 Various scripts that wrap the MAAS CLI for utility and prototyping purposes.
