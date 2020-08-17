@@ -7,6 +7,67 @@ import subprocess, sys, os, math
 debug = False
 
 
+def split_into_columns(column_count, input_list):
+    """
+    split a list into a list with col_count sublists instead
+    """
+    # get the length of the list
+    number_of_entries = len(input_list)
+
+    # calculate how many in each column (ignore remainders)
+    entries_per_column = int(number_of_entries / column_count)
+
+    # calculate how many iterations are required
+    iterations_required = math.ceil(number_of_entries / entries_per_column)
+
+    # create a list to return the results
+    returnable_list = []
+
+    # set a starting entry to track the input_list entry
+    # as we move through the input_list to divide it
+    starting_entry = 0
+
+    # set an ending_entry to track where we stop on each
+    # successive pass through the input_list
+    ending_entry = starting_entry + entries_per_column
+
+    # divide the list
+    for sublist_counter in range(0, iterations_required):
+
+        # create a new column (sublist)
+        returnable_list.append([])
+
+        # copy entries per column into list,
+        # or whatever's left for last column
+        for column_entry_counter in range(starting_entry, ending_entry):
+            try:
+                returnable_list[sublist_counter].append(
+                    input_list[column_entry_counter]
+                )
+            except:
+                continue
+
+        # increment the starting and ending entry markers
+        starting_entry += entries_per_column
+        ending_entry += entries_per_column
+
+    # return the split list to the caller
+    return returnable_list
+
+
+def get_max_column_widths(columnarized_list):
+
+    # create a variable to return the list of column widths
+    max_column_widths = []
+
+    # run through every column in the outer list
+    for column in columnarized_list:
+        max_column_widths.append(len(max(column, key=len)))
+
+    # return width of list
+    return max_column_widths
+
+
 class MyPrompt(Cmd):
     prompt = "mesh> "
     intro = "MAAS executive shell"
@@ -21,53 +82,43 @@ class MyPrompt(Cmd):
     def do_ls(self, inp):
 
         # get the terminal width in columns
-        rw, cl = os.popen("stty size", "r").read().split()
-        columns = int(cl)
-
-        # what are the filenames in the cwd?
+        terminal_rows, terminal_columns = os.popen("stty size", "r").read().split()
+        # get the filenames in the cwd
         filenames = subprocess.check_output("ls").decode("ascii").splitlines()
 
         # prepend :maas: to the list
         filenames.insert(0, ":maas:")
 
-        # estimate number of rows
-        rows = math.ceil(len("".join(filenames)) / columns)
-
-        # TODO: fix this to deal with partial rows
-        # dry-run to find correct number of rows (lines)
-        for trows in range(rows, rows + 3):
-
-            # each new row-count resets everything
-            matrix = []
-            colwidth = []
-
-            # for every trial row in this attempt
-            for i in range(0, trows):
-
-                # create a list for the columns
-                matrix.append([])
-                column = 0
-
-                # for every trowth filename, since they go down, then across by alpha
-                for j in range(i, len(filenames), trows):
-
-                    # append the filename to this row-column
-                    matrix[i].append(filenames[j])
-                    try:
-                        if colwidth[column] < len(filenames[j]):
-                            colwidth[column] = len(filenames[j])
-                    except:
-                        colwidth.append(len(filenames[j]))
-                    column += 1
-                if sum(colwidth) + 2 * len(colwidth) + 2 > columns:
-                    break
-            if sum(colwidth) + 2 * len(colwidth) + 2 < columns:
+        # try columns from 1 until the right width is found
+        number_of_columns = 1
+        while True:
+            columnarized_list = split_into_columns(number_of_columns, filenames)
+            maximum_col_widths = get_max_column_widths(columnarized_list)
+            maximum_row_width = sum(maximum_col_widths) + 2 + number_of_columns * 2
+            if maximum_row_width > int(terminal_columns) - 2:
+                number_of_columns -= 1
                 break
+            number_of_columns += 1
 
-        for x in matrix:
-            print("  ", end="")
-            for i in range(0, len(x)):
-                print(str(x[i]).ljust(colwidth[i]), "  ", end="")
+        # get the correctly columnarized list
+        columnarized_list = split_into_columns(number_of_columns, filenames)
+
+        # get the column widths to pad each entry
+        maximum_col_widths = get_max_column_widths(columnarized_list)
+        # walk across the columns by row
+        for i in range(0, len(columnarized_list[0])):
+
+            # walk down the rows
+            for j in range(0, len(columnarized_list)):
+                try:
+                    # print the justified column entry, without newline
+                    print(
+                        columnarized_list[j][i].ljust(maximum_col_widths[j]),
+                        "  ",
+                        end="",
+                    )
+                except:
+                    continue
             print("")
 
         return
