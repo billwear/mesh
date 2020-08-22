@@ -2,7 +2,7 @@
 
 from cmd import Cmd
 from tabulate import tabulate
-import subprocess, sys, os, math
+import subprocess, sys, os, math, pprint
 
 debug = False
 
@@ -11,8 +11,17 @@ def split_into_columns(column_count, input_list):
     """
     split a list into a list with col_count sublists instead
     """
+    global debug
+
     # get the length of the list
     number_of_entries = len(input_list)
+    if debug == True:
+        print("column_count:", column_count)
+        input("press Enter to continue")
+        print("input_list", input_list)
+        input("press Enter to continue")
+        print("number_of_entries", number_of_entries)
+        input("press Enter to continue")
 
     # calculate how many in each column (ignore remainders)
     entries_per_column = int(number_of_entries / column_count)
@@ -68,6 +77,35 @@ def get_max_column_widths(columnarized_list):
     return max_column_widths
 
 
+def get_max_row_width(columnarized_list):
+
+    global debug
+
+    # run through every row in the list
+    # columnarized_list[0][0] + columnarized_list[1][0] + ...
+    row_width = 0
+    for i in range(0, len(columnarized_list[0])):
+        width = 0
+        try:
+            for j in range(0, len(columnarized_list)):
+                if debug == True:
+                    print("entry:", columnarized_list[j][i])
+                width += len(columnarized_list[j][i]) + 2
+                if debug == True:
+                    print("width:", width)
+                    input("press Enter to continue")
+                if width > row_width:
+                    row_width = width
+        except:
+            continue
+
+    # return width of list
+    if debug == True:
+        print("row_width:", row_width)
+        input("press Enter to continue")
+    return row_width
+
+
 class MyPrompt(Cmd):
     prompt = "mesh> "
     intro = "MAAS executive shell"
@@ -79,10 +117,22 @@ class MyPrompt(Cmd):
     def help_exit(self):
         print("exit mesh: x q Ctrl-D")
 
+    def do_debug(self, inp):
+        global debug
+
+        if debug == False:
+            debug = True
+            print("Debug turned on")
+        else:
+            debug = False
+            print("Debug turned off")
+
     def do_ls(self, inp):
+        global debug
 
         # get the terminal width in columns
         terminal_rows, terminal_columns = os.popen("stty size", "r").read().split()
+
         # get the filenames in the cwd
         filenames = subprocess.check_output("ls").decode("ascii").splitlines()
 
@@ -93,9 +143,16 @@ class MyPrompt(Cmd):
         number_of_columns = 1
         while True:
             columnarized_list = split_into_columns(number_of_columns, filenames)
-            maximum_col_widths = get_max_column_widths(columnarized_list)
-            maximum_row_width = sum(maximum_col_widths) + 2 + number_of_columns * 2
-            if maximum_row_width > int(terminal_columns) - 2:
+            if debug == True:
+                print("columnarized list")
+                cl = pprint.PrettyPrinter(indent=4)
+                cl.pprint(columnarized_list)
+                input("press any key to continue")
+            maximum_column_width = get_max_column_widths(columnarized_list)
+            maximum_row_width = 0
+            for x in maximum_column_width:
+                maximum_row_width += x
+            if maximum_row_width > int(terminal_columns):
                 number_of_columns -= 1
                 break
             number_of_columns += 1
@@ -105,6 +162,7 @@ class MyPrompt(Cmd):
 
         # get the column widths to pad each entry
         maximum_col_widths = get_max_column_widths(columnarized_list)
+
         # walk across the columns by row
         for i in range(0, len(columnarized_list[0])):
 
